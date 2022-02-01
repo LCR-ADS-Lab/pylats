@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".19"
+version = ".21"
 
 import math
 import pickle
@@ -43,8 +43,9 @@ def get_fname(packagename,filename): #look in package, then in local working dir
 		data_filename = filename
 	return(data_filename)
 
-#realwordsf = get_fname('pylats',"real_words5.pickle") #words in written COCA that occur at least 5 times
-realwordsf = get_fname('pylats',"pylats/pylats/real_words5.pickle") #words in written COCA that occur at least 5 times
+realwordsf = get_fname('pylats',"real_words5.pickle") #words in written COCA that occur at least 5 times
+#for testing prior to upload:
+#realwordsf = get_fname('pylats',"pylats/pylats/real_words5.pickle") #words in written COCA that occur at least 5 times
 realwords = pickle.load(open(realwordsf,"rb"))
 
 class parameters:

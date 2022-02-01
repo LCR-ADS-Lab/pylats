@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".19" #previous code was called "pre_process"
+version = ".19"
 
 import math
 import pickle
@@ -38,12 +38,14 @@ if spld == True:
 def get_fname(packagename,filename): #look in package, then in local working directory
 	try: 
 		data_filename = pkg_resources.resource_filename(packagename, filename)
-	except ModuleNotFoundError:
+	except (ModuleNotFoundError, TypeError):
 		print("NOTE:",filename,"not found in package, using local file")
 		data_filename = filename
 	return(data_filename)
 
-realwordsf = get_fname('TAALED',"lats/real_words5.pickle") #words in written COCA that occur at least 5 times
+realwordsf = get_fname('pylats',"real_words5.pickle") #words in written COCA that occur at least 5 times
+#for testing prior to upload:
+#realwordsf = get_fname('pylats',"pylats/pylats/real_words5.pickle") #words in written COCA that occur at least 5 times
 realwords = pickle.load(open(realwordsf,"rb"))
 
 class parameters:
@@ -70,7 +72,7 @@ class ld_params:
 	rwl = realwords
 	sp = True
 	sspl = "spacy"
-	pos = None #other options are "pos" for Penn tags and "upos" for universal tags
+	pos = "upos" #other options are "pos" for Penn tags and "upos" for universal tags
 	removel = ['becuase'] #typos and other words not caught by the real words list
 	lemma = True
 	attested = True #filter output using real words list?

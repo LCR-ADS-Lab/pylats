@@ -1,2 +1,2 @@
 name = "lats"
-#import lats
+from pylats.lats import *

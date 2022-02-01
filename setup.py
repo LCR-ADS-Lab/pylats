@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="lexical_diversity",
-    version="0.1.1",
+    name="pylats",
+    version="0.21",
     author="Kristopher Kyle",
     author_email="kristopherkyle1@gmail.com",
-    description="A simple program for calcuating lexical diversity",
+    description="Text preprocessing for downstream linguistic analyses",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/kristopherkyle/lexical_diversity",
+    url="https://github.com/LCR-ADS-Lab/pylats",
     packages=setuptools.find_packages(),
     include_package_data=True,
     classifiers=[
