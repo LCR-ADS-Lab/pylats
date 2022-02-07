@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pylats",
-    version="0.23",
+    version="0.24",
     author="Kristopher Kyle",
     author_email="kristopherkyle1@gmail.com",
     description="Text preprocessing for downstream linguistic analyses",
