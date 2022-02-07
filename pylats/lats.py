@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".21"
+version = ".24"
 
 import math
 import pickle
@@ -22,7 +22,7 @@ try:
 	import spacy
 	spld = True
 except ModuleNotFoundError:
-	print("Spacy has not been installed.\nTo access advanced features, please install Spacy.")
+	print("Spacy has not been installed.\nTo access pylats advanced features for English, please install Spacy.")
 	spld = False
 
 if spld == True:
@@ -75,6 +75,7 @@ class ld_params:
 	pos = "upos" #other options are "pos" for Penn tags and "upos" for universal tags
 	removel = ['becuase'] #typos and other words not caught by the real words list
 	lemma = True
+	lower = True #treat all words as lower case
 	attested = True #filter output using real words list?
 	spaces = [" "] #need to add more here
 	override = [] #items the system ignores that should be overridden
