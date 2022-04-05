@@ -1,11 +1,11 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pylats",
-    version="0.25",
+    version="0.26",
     author="Kristopher Kyle",
     author_email="kristopherkyle1@gmail.com",
     description="Text preprocessing for downstream linguistic analyses",
