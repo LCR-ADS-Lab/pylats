@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".31"
+version = ".32"
 #need to test numbers.
 import math
 import os

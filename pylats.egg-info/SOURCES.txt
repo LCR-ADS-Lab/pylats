@@ -10,7 +10,10 @@ dev/lats_28_dev.py
 dev/lats_29_dev.py
 dev/lats_30_dev.py
 dev/pre_process_17.py
+pylats/10k_pos_noes.pickle
+pylats/10k_raw_noes.pickle
 pylats/__init__.py
+pylats/cedel_ignore.pickle
 pylats/lats.py
 pylats/real_words5.pickle
 pylats.egg-info/PKG-INFO
