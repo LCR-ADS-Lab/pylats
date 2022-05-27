@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: pylats
-Version: 0.26
+Version: 0.31
 Summary: Text preprocessing for downstream linguistic analyses
 Home-page: https://github.com/LCR-ADS-Lab/pylats
 Author: Kristopher Kyle
@@ -8,7 +8,6 @@ Author-email: kristopherkyle1@gmail.com
 License: UNKNOWN
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
-Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Description-Content-Type: text/markdown
 
@@ -121,12 +120,14 @@ print(msp_new.toks)
 
 #### Default parameters
 ```python
-class parameters:
+class parameters: #default English parameters
+	lang = "en"
+	model = "en_core_web_sm"
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']
 	punctse = [".","?","!"]
 	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
 	splitter = "\n" #for splitting paragraphs
-	rwl = realwords
+	rwl = en_rwl
 	sp = True
 	sspl = "spacy"
 	pos = None #other options are "pos" for Penn tags and "upos" for universal tags
@@ -134,15 +135,21 @@ class parameters:
 	lemma = False
 	lower = True #treat all words as lower case
 	attested = False #filter output using real words list?
-	spaces = [" "] #need to add more here
+	spaces = [" ","  ","   ","    "] #need to add more here
 	override = [] #items the system ignores that should be overridden
+	posignore = []
+	numbers = ["NUM"] #pos_ tag for numbers
+	nonumbers = True
+	connect = "__" #for connecting ngrams
+	contentPOS = [] #can be added, blank for now
+	contentLemIgnore = [] #can be added, blank for now
 ``` 
 
 ### Adding part of speech information
 If spacy is installed (and activated), part of speech tags can be added to each token, which can be useful in disambiguating homographic tokens (e.g., **_run_** as a verb in the sentence _I like to **run**._ versus run as a noun in the sentence _I went for a **run**._ ). This is helpful in a number of applications, including calculating indices lexical diversity.
 
 ```python
-pos_params = lats.parameters() #still need to fix this
+pos_params = lats.parameters() 
 pos_params.pos = "upos" #for large-grained universal parts of speech
 run_sample = lats.Normalize("I like to run. I went for a run.", params = pos_params)
 for x in run_sample.sents:
@@ -155,22 +162,30 @@ for x in run_sample.sents:
 ```
 ### Changing the spacy language model
 
-To change the spacy language model that is used by pylats, first make sure that the desired model has been downloaded from [spacy](https://spacy.io/). Then, load the model:
+To change the spacy language model that is used by pylats, first make sure that the desired model has been downloaded from [spacy](https://spacy.io/). The preferred method to load models is to create a parameter class that includes the appropriate model (for easier replicability), then use the following command:
+
+```python
+lats.nlp = lats.load_model(lats.myparameters.model)
+```
+Alternatively, a model can be loaded directly:
 
 ```python
 #loading the "en_core_web_trf" model
-lats.nlp = lats.spacy.load("en_core_web_trf")
+lats.nlp = lats.load_model("en_core_web_trf")
 ```
 ## Using pylats with languages other than English
-The early versions of pylats have an advanced features for English texts and basic features for other languages. As the tool expands, advanced feature support will be added for other languages (for example, advanced features will be added for Spanish in the near future).
+Pylats currently has advanced features available for English and Spanish texts and basic features for other languages. As the tool expands, advanced feature support will be added for other languages (let us know what languages you would like to see supported!).
 
 To process texts with basic features, simply change parameters.sp to `True`. The processor will treat text between whitespace as a token. Accordingly, some pre-processing may be necessary.
 
-**Example 1 (Spanish)**:
+**Example 1 (Spanish), advanced features**:
+There are currently two pre-made parameter classes for Spanish. One uses a faster (but slightly less accurate) tagging and parsing model (parameters_es, which uses the "es_core_news_sm" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process Spanish texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
+
+Then, load the appropriate Spanish model and be sure to use the appropriate Spanish parameters class.
+
 ```python
-whtsp_params = lats.parameters() #copy parameters
-whtsp_params.sp = False #turn off spacy processing
-span_sample = lats.Normalize("Me gustaría aqua con gas",whtsp_params)
+lats.nlp = lats.load_model(lats.parameters_es.model) #load spacy model for Spanish
+span_sample = lats.Normalize("Me gustaría aqua con gas.",lats.parameters_es) #process text
 print(span_sample.toks)
 ```
 
@@ -178,7 +193,23 @@ print(span_sample.toks)
 ['me', 'gustaría', 'aqua', 'con', 'gas']
 ```
 
-**Example 2 (Korean)**:
+If we want to create a lemmatized representation of a text and add part of speech tags, we can create a slightly altered version of our parameters class:
+
+```python
+parameters_es_lemmas = lats.parameters_es()
+parameters_es_lemmas.lemma = True #set lemma to True
+parameters_es_lemmas.pos = "pos" #set pos tags to universal pos + fine-grained verb POS tags (universal pos + mood/tense)
+
+
+span_sample_lemma = lats.Normalize("Me gustaría aqua con gas.",parameters_es_lemmas) #process text
+print(span_sample_lemma.toks)
+```
+
+```
+['yo_PRON', 'gustar_VERB_Cnd', 'aqua_ADJ', 'con_ADP', 'gas_NOUN']
+```
+
+**Example 2 (Korean), basic features**:
 
 ```python
 whtsp_params = lats.parameters() #copy parameters

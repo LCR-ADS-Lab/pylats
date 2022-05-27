@@ -4,6 +4,11 @@ setup.py
 dev/__init__.py
 dev/lats_18.py
 dev/lats_19.py
+dev/lats_24-26.py
+dev/lats_27_dev.py
+dev/lats_28_dev.py
+dev/lats_29_dev.py
+dev/lats_30_dev.py
 dev/pre_process_17.py
 pylats/__init__.py
 pylats/lats.py
