@@ -110,6 +110,10 @@ print(msp_new.toks)
 class parameters: #default English parameters
 	lang = "en"
 	model = "en_core_web_sm"
+	try:
+		nlp = nlp_en_sm
+	except NameError:
+		nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']
 	punctse = [".","?","!"]
 	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
@@ -152,14 +156,10 @@ for x in run_sample.sents:
 To change the spacy language model that is used by pylats, first make sure that the desired model has been downloaded from [spacy](https://spacy.io/). The preferred method to load models is to create a parameter class that includes the appropriate model (for easier replicability), then use the following command:
 
 ```python
-lats.nlp = lats.load_model(lats.myparameters.model)
+myparameters.model = "en_core_web_trf"
+myparameters.nlp = lats.load_model(lats.myparameters.model)
 ```
-Alternatively, a model can be loaded directly:
 
-```python
-#loading the "en_core_web_trf" model
-lats.nlp = lats.load_model("en_core_web_trf")
-```
 ## Using pylats with languages other than English
 Pylats currently has advanced features available for English and Spanish texts and basic features for other languages. As the tool expands, advanced feature support will be added for other languages (let us know what languages you would like to see supported!).
 
@@ -168,11 +168,10 @@ To process texts with basic features, simply change parameters.sp to `True`. The
 **Example 1 (Spanish), advanced features**:
 There are currently two pre-made parameter classes for Spanish. One uses a faster (but slightly less accurate) tagging and parsing model (parameters_es, which uses the "es_core_news_sm" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process Spanish texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
 
-Then, load the appropriate Spanish model and be sure to use the appropriate Spanish parameters class.
+If either of these models are installed prior to importing pylats, you can simply use the appropriate parameter class.
 
 ```python
-lats.nlp = lats.load_model(lats.parameters_es.model) #load spacy model for Spanish
-span_sample = lats.Normalize("Me gustaría aqua con gas.",lats.parameters_es) #process text
+span_sample = lats.Normalize("Me gustaría aqua con gas.",lats.parameters_es_trf) #process text
 print(span_sample.toks)
 ```
 
@@ -183,10 +182,9 @@ print(span_sample.toks)
 If we want to create a lemmatized representation of a text and add part of speech tags, we can create a slightly altered version of our parameters class:
 
 ```python
-parameters_es_lemmas = lats.parameters_es()
+parameters_es_lemmas = lats.parameters_es_trf()
 parameters_es_lemmas.lemma = True #set lemma to True
 parameters_es_lemmas.pos = "pos" #set pos tags to universal pos + fine-grained verb POS tags (universal pos + mood/tense)
-
 
 span_sample_lemma = lats.Normalize("Me gustaría aqua con gas.",parameters_es_lemmas) #process text
 print(span_sample_lemma.toks)

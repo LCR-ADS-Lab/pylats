@@ -9,6 +9,8 @@ dev/lats_27_dev.py
 dev/lats_28_dev.py
 dev/lats_29_dev.py
 dev/lats_30_dev.py
+dev/lats_32_dev.py
+dev/lats_33_dev_beta.py
 dev/pre_process_17.py
 pylats/10k_pos_noes.pickle
 pylats/10k_raw_noes.pickle

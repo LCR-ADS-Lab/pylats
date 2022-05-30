@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".32"
+version = ".33"
 #need to test numbers.
 import math
 import os
@@ -38,10 +38,55 @@ en_10kpos = pickle.load(open(get_fname('pylats',"10k_pos_noes.pickle"),"rb")) #w
 en_10kraw = pickle.load(open(get_fname('pylats',"10k_raw_noes.pickle"),"rb")) #words in written COCA that occur at least 5 times#words in COCA that are within the most frequent 10k
 cedel_ignore = pickle.load(open(get_fname('pylats',"cedel_ignore.pickle"),"rb")) #words in written COCA that occur at least 5 times#words in COCA that are within the most frequent 10k
 
+
+
+statusd = {"spld":False,"mdld":False,"models" : []} #for updating and maintaining load statuses
+
+def load_model(modelname): # this is an attempt to get a module to load easily
+	print("Attempting to load spacy model:", modelname)
+	if statusd["spld"] == True: #if spacy has been successfully loaded
+		try:
+			nlp = spacy.load(modelname) #try to load model
+			statusd["mdld"] = True #set dictionary value
+			statusd["models"].append(modelname) #set dictionary value
+			print("Successfully loaded spacy model:",modelname)
+		except OSError:
+			print("The selected model <",modelname,"> does not seem to be available on your system.\nPlease load a different model or see Spacy documentation for assistance.")
+	else:
+		print("You cannot load a Spacy model because pylats was not able to import Spacy. This most likely means that Spacy is not installed on your system.")
+	if statusd["mdld"] == False:
+		nlp = None
+	return(nlp)
+
+try: 
+	import spacy
+	statusd["spld"] = True
+except ModuleNotFoundError:
+	print("Spacy has not been installed.\nTo access pylats advanced features for English or Spanish, please install Spacy.")
+	statusd["spld"] = False
+
+# if statusd["spld"] == True:
+# 	try:
+# 		nlp_en_sm = spacy.load("en_core_web_sm")
+# 		statusd["models"].append("en_core_web_sm")
+# 	except OSError:
+# 		print("The selected model <",modelname,"> does not seem to be available on your system.\nPlease load a different model or see Spacy documentation for assistance.")
+# 		if statusd["mdld"] == False:
+# 			statusd["mdld"] = False
+
+nlp_en_sm = load_model("en_core_web_sm")
+nlp_en_trf = load_model("en_core_web_trf")
+nlp_es_sm = load_model("es_core_news_sm")
+nlp_es_trf = load_model("es_dep_news_trf")
+
 #default parameters
 class parameters: #default English parameters
 	lang = "en"
 	model = "en_core_web_sm"
+	try:
+		nlp = nlp_en_sm
+	except NameError:
+		nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']
 	punctse = [".","?","!"]
 	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
@@ -63,39 +108,14 @@ class parameters: #default English parameters
 	contentPOS = [] #can be added, blank for now
 	contentLemIgnore = [] #can be added, blank for now
 
-statusd = {"spld":False,"mdld":False,"model" : None} #for updating and maintaining load statuses
-
-def load_model(modelname): # this is an attempt to get a module to load easily
-	if statusd["spld"] == True: #if spacy has been successfully loaded
-		try:
-			nlp = spacy.load(modelname) #try to load model
-			statusd["mdld"] = True #set dictionary value
-			statusd["model"] = modelname #set dictionary value
-		except OSError:
-			print("The selected model <",modelname,"> does not seem to be available on your system.\nPlease load a different model or see Spacy documentation for assistance.")
-			statusd["mdld"] = False
-	else:
-		print("You cannot load a Spacy model because pylats was not able to import Spacy. This most likely means that Spacy is not installed on your system.")
-	if statusd["mdld"] == False:
-		statusd["model"] = None
-		nlp = None
-	return(nlp)
-
-try: 
-	import spacy
-	statusd["spld"] = True
-except ModuleNotFoundError:
-	print("Spacy has not been installed.\nTo access pylats advanced features for English or Spanish, please install Spacy.")
-	statusd["spld"] = False
-
-if statusd["spld"] == True:
-	nlp = load_model(parameters.model)
-
-
 #other parameters:
 class ld_params_en:
 	lang = "en"
 	model = "en_core_web_sm"
+	try:
+		nlp = nlp_en_sm
+	except NameError:
+		nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']
 	punctse = [".","?","!"]
 	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
@@ -120,6 +140,10 @@ class ld_params_en:
 class ld_params_en_trf:
 	lang = "en"
 	model = "en_core_web_trf"
+	try:
+		nlp = nlp_en_trf
+	except NameError:
+		nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']
 	punctse = [".","?","!"]
 	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
@@ -145,6 +169,10 @@ class ld_params_en_trf:
 class parameters_es: #these are for the Spanish parameters - these need to be updated
 	lang = "es"
 	model = "es_core_news_sm" #also es_dep_news_trf
+	try:
+		nlp = nlp_es_sm
+	except NameError:
+		nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"','¿','¡','”','“','…',"--","–","»","]","["]
 	punctse = [".","?","!"]
 	abbrvs = [] #these can be added
@@ -169,6 +197,10 @@ class parameters_es: #these are for the Spanish parameters - these need to be up
 class parameters_es_trf: #these are for the Spanish parameters - these need to be updated
 	lang = "es"
 	model = "es_dep_news_trf" #also es_dep_news_trf
+	try:
+		nlp = nlp_es_trf
+	except NameError:
+		nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"','¿','¡','”','“','…',"--","–","»","]","["]
 	punctse = [".","?","!"]
 	abbrvs = [] #these can be added
@@ -322,7 +354,7 @@ class Normalize: #working copy complete, still need to streamline functions; sti
 				counter +=1
 		else: #if sp == True, rely on Spacy for tokenization
 			text = text.replace("\n"," ")
-			for token in nlp(text):
+			for token in params.nlp(text):
 				tok_text.append(TokObject(token,counter,params))#realwords relies on a global variable
 				counter+=1
 		return(tok_text)
@@ -365,7 +397,7 @@ class Normalize: #working copy complete, still need to streamline functions; sti
 		
 		if params.sp == True:
 			if params.sspl == "spacy":
-				doc = nlp(text)
+				doc = params.nlp(text)
 				for sent in doc.sents:
 					toks = []
 					counter = 0
