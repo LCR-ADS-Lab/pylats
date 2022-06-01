@@ -1,1 +1,1 @@
-include pylats/*.pickle
+include pylats/*.pickle pylats/*.json

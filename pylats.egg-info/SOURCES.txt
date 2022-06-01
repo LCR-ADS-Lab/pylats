@@ -11,11 +11,13 @@ dev/lats_29_dev.py
 dev/lats_30_dev.py
 dev/lats_32_dev.py
 dev/lats_33_dev_beta.py
+dev/lats_34.py
 dev/pre_process_17.py
 pylats/10k_pos_noes.pickle
 pylats/10k_raw_noes.pickle
 pylats/__init__.py
 pylats/cedel_ignore.pickle
+pylats/corp_raw_freq_escow_ax01_2021-04-28_5.json
 pylats/lats.py
 pylats/real_words5.pickle
 pylats.egg-info/PKG-INFO

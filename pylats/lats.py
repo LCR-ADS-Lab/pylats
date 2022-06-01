@@ -6,11 +6,12 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".33"
+version = ".35" #add real word list for Spanish
 #need to test numbers.
 import math
 import os
 import pickle
+import json
 from operator import itemgetter
 import statistics as stat
 from collections import Counter
@@ -34,9 +35,10 @@ def get_fname(packagename,filename): #look in package, then in local working dir
 		return(filename)
 
 en_rwl = pickle.load(open(get_fname('pylats',"real_words5.pickle"),"rb")) #words in written COCA that occur at least 5 times
-en_10kpos = pickle.load(open(get_fname('pylats',"10k_pos_noes.pickle"),"rb")) #words in written COCA that occur at least 5 times#words in COCA that are within the most frequent 10k
-en_10kraw = pickle.load(open(get_fname('pylats',"10k_raw_noes.pickle"),"rb")) #words in written COCA that occur at least 5 times#words in COCA that are within the most frequent 10k
-cedel_ignore = pickle.load(open(get_fname('pylats',"cedel_ignore.pickle"),"rb")) #words in written COCA that occur at least 5 times#words in COCA that are within the most frequent 10k
+es_rwl = json.load(open(get_fname('pylats',"corp_raw_freq_escow_ax01_2021-04-28_5.json")))
+en_10kpos = pickle.load(open(get_fname('pylats',"10k_pos_noes.pickle"),"rb")) #words in COCA that are within the most frequent 10k
+en_10kraw = pickle.load(open(get_fname('pylats',"10k_raw_noes.pickle"),"rb")) #words in COCA that are within the most frequent 10k
+cedel_ignore = pickle.load(open(get_fname('pylats',"cedel_ignore.pickle"),"rb")) #words in the CEDEL L2 Spanish (L1 English) corpus that should be ignored but were not caught by other filters
 
 
 
@@ -177,14 +179,14 @@ class parameters_es: #these are for the Spanish parameters - these need to be up
 	punctse = [".","?","!"]
 	abbrvs = [] #these can be added
 	splitter = "\n" #for splitting paragraphs
-	rwl = [] #this will need to be updated
+	rwl = es_rwl
 	sp = True
 	sspl = "spacy"
 	pos = None #other options are "pos" for fine-grained tags and "upos" for universal tags
 	removel = en_10kraw + en_10kpos + cedel_ignore #typos and other words not caught by the real words list also, frequent English words that may occur in L2 corpora may need to filter these
 	lemma = False
 	lower = True #treat all words as lower case
-	attested = False #filter output using real words list?
+	attested = True #filter output using real words list?
 	spaces = [" ","  ","   ","    "]  #need to add more here
 	override = [] 
 	posignore = ["PROPN"] #proper nouns and numbers. Note that some numbers are missed. Need to fix.
@@ -205,14 +207,14 @@ class parameters_es_trf: #these are for the Spanish parameters - these need to b
 	punctse = [".","?","!"]
 	abbrvs = [] #these can be added
 	splitter = "\n" #for splitting paragraphs
-	rwl = [] #this will need to be updated
+	rwl = es_rwl
 	sp = True
 	sspl = "spacy"
 	pos = None #other options are "pos" for fine-grained tags and "upos" for universal tags
 	removel = en_10kraw + en_10kpos + cedel_ignore #typos and other words not caught by the real words list also, frequent English words that may occur in L2 corpora may need to filter these
 	lemma = False
 	lower = True #treat all words as lower case
-	attested = False #filter output using real words list?
+	attested = True #filter output using real words list?
 	spaces = [" ","  ","   ","    "]  #need to add more here
 	override = [] 
 	posignore = ["PROPN"] #proper nouns and numbers. Note that some numbers are missed. Need to fix.
