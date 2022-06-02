@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".35" #add real word list for Spanish
+version = ".36" #Fix multiLoad issue
 #need to test numbers.
 import math
 import os
@@ -700,13 +700,13 @@ def multiLoad(lotf,parameters,fnm = True,verbose = True,big_count = 20): #list o
 	minicount = 0 #for user output
 	if verbose == True:
 		print("Pylats is preprocessing", total_num,"files")
-	for idx,text in enumerate(lotf):
+	for idx,textn in enumerate(lotf):
 		if fnm == True:
-			text = open(text, encoding = "utf-8", errors = "ignore")
-			simpleName = fnm.split("/")[-1] #last item in filepath
-		elif isinstance(text,tuple) == True: #can use (filename,text) tuples
-			simpleName = text[0]
-			text = text[1]
+			text = open(textn, encoding = "utf-8", errors = "ignore")
+			simpleName = textn.split("/")[-1] #last item in filepath
+		elif isinstance(textn,tuple) == True: #can use (filename,text) tuples
+			simpleName = textn[0]
+			text = textn[1]
 		else:
 			simpleName = str(idx) #if a filename isn't provided, use the idx as the filename
 		
