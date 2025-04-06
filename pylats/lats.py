@@ -35,7 +35,7 @@ def get_fname(packagename,filename): #look in package, then in local working dir
 		return(filename)
 
 en_rwl = pickle.load(open(get_fname('pylats',"real_words5.pickle"),"rb")) #words in written COCA that occur at least 5 times
-es_rwl = json.load(open(get_fname('pylats',"corp_raw_freq_escow_ax01_2021-04-28_5.json")))
+es_rwl = json.load(open(get_fname('pylats',"corp_raw_freq_escow_ax01_2021-04-28_5.json"), "r", encoding="utf-8"))
 en_10kpos = pickle.load(open(get_fname('pylats',"10k_pos_noes.pickle"),"rb")) #words in COCA that are within the most frequent 10k
 en_10kraw = pickle.load(open(get_fname('pylats',"10k_raw_noes.pickle"),"rb")) #words in COCA that are within the most frequent 10k
 cedel_ignore = pickle.load(open(get_fname('pylats',"cedel_ignore.pickle"),"rb")) #words in the CEDEL L2 Spanish (L1 English) corpus that should be ignored but were not caught by other filters
