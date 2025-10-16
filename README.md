@@ -198,7 +198,7 @@ print(span_sample_lemma.toks)
 ```
 
 **Example 2 (German), advanced features**:
-There are currently two pre-made parameter classes for German. One uses a faster (but slightly less accurate) tagging and parsing model (ld_params_de, which uses the "ld_params_de_trf" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process German texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
+There are currently two pre-made parameter classes for German. One uses a faster (but slightly less accurate) tagging and parsing model (ld_params_de, which uses the "de_core_news_sm" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process German texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
 
 If either of these models are installed prior to importing pylats, you can simply use the appropriate parameter class.
 
