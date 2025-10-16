@@ -6,8 +6,9 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".37" #Fix multiLoad issue
+version = ".40" #allow lats to be included in compiled packages
 #need to test numbers.
+import sys
 import math
 import os
 import pickle
@@ -19,6 +20,10 @@ import pkg_resources #for importing data from packages
 from os.path import exists
 
 #still need to deal with real words list (because we will have multiple)
+def resource_path(relative):
+	if hasattr(sys, "_MEIPASS"):
+		return os.path.join(sys._MEIPASS, relative)
+	return os.path.join(relative)
 
 #load datafiles
 def get_fname(packagename,filename): #look in package, then in local working directory
@@ -45,6 +50,7 @@ cedel_ignore = pickle.load(open(get_fname('pylats',"cedel_ignore.pickle"),"rb"))
 statusd = {"spld":False,"mdld":False,"models" : []} #for updating and maintaining load statuses
 
 def load_model(modelname): # this is an attempt to get a module to load easily
+	nlp = None
 	print("Attempting to load spacy model:", modelname)
 	if statusd["spld"] == True: #if spacy has been successfully loaded
 		try:
@@ -56,8 +62,6 @@ def load_model(modelname): # this is an attempt to get a module to load easily
 			print("The selected model <",modelname,"> does not seem to be available on your system.\nPlease load a different model or see Spacy documentation for assistance.")
 	else:
 		print("You cannot load a Spacy model because pylats was not able to import Spacy. This most likely means that Spacy is not installed on your system.")
-	if statusd["mdld"] == False:
-		nlp = None
 	return(nlp)
 
 try: 
@@ -76,10 +80,25 @@ except ModuleNotFoundError:
 # 		if statusd["mdld"] == False:
 # 			statusd["mdld"] = False
 
+
+# nlp_en_sm = load_model("en_core_web_sm")
+# nlp_en_trf = load_model("en_core_web_trf")
+# nlp_es_sm = load_model("es_core_news_sm")
+# nlp_es_trf = load_model("es_dep_news_trf")
+# 
+# nlp_de_trf = load_model("de_dep_news_trf")
+# nlp_de_sm = load_model("de_core_news_sm")
+
+# print(resource_path("en_core_web_sm")exit)
+
 nlp_en_sm = load_model("en_core_web_sm")
-nlp_en_trf = load_model("en_core_web_trf")
-nlp_es_sm = load_model("es_core_news_sm")
-nlp_es_trf = load_model("es_dep_news_trf")
+# nlp_en_trf = load_model(resource_path("en_core_web_trf"))
+# nlp_es_sm = load_model(resource_path("es_core_news_sm"))
+# nlp_es_trf = load_model(resource_path("es_dep_news_trf"))
+
+# nlp_de_trf = load_model(resource_path("de_dep_news_trf"))
+# nlp_de_sm = load_model(resource_path("de_core_news_sm"))
+
 
 #default parameters
 class parameters: #default English parameters
@@ -142,10 +161,7 @@ class ld_params_en:
 class ld_params_en_trf:
 	lang = "en"
 	model = "en_core_web_trf"
-	try:
-		nlp = nlp_en_trf
-	except NameError:
-		nlp = None
+	nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']
 	punctse = [".","?","!"]
 	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
@@ -171,10 +187,7 @@ class ld_params_en_trf:
 class parameters_es: #these are for the Spanish parameters - these need to be updated
 	lang = "es"
 	model = "es_core_news_sm" #also es_dep_news_trf
-	try:
-		nlp = nlp_es_sm
-	except NameError:
-		nlp = None
+	nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"','¿','¡','”','“','…',"--","–","»","]","["]
 	punctse = [".","?","!"]
 	abbrvs = [] #these can be added
@@ -199,10 +212,7 @@ class parameters_es: #these are for the Spanish parameters - these need to be up
 class parameters_es_trf: #these are for the Spanish parameters - these need to be updated
 	lang = "es"
 	model = "es_dep_news_trf" #also es_dep_news_trf
-	try:
-		nlp = nlp_es_trf
-	except NameError:
-		nlp = None
+	nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"','¿','¡','”','“','…',"--","–","»","]","["]
 	punctse = [".","?","!"]
 	abbrvs = [] #these can be added
@@ -224,7 +234,58 @@ class parameters_es_trf: #these are for the Spanish parameters - these need to b
 	contentPOS = ["VERB","NOUN","PROPN","ADJ","ADV"] #note that PROPN will be overridden by posignore in this case
 	contentLemIgnore = ["ser","estar"] #note that these are actually already ignored because they are tagged as "AUX"
 
-class TokObject(): #need to add
+class ld_params_de: #German ld parameters (from Montanari and Montanari)
+	lang = "de"
+	model = "de_core_news_sm"
+	nlp = None
+	punctuation = list(set((['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']+['[', ']', '„', '“', '”', '*', '/', '..', '...', '....', '.....', '........', '«', '»'])))
+	punctse = [".","?","!"]
+	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
+	splitter = "\n" #for splitting paragraphs
+	rwl = []
+	sp = True
+	sspl = "spacy"
+	pos = None #other options are "pos" for Penn tags and "upos" for universal tags
+	removel = [':)', '):', '=P', '=)', ':p', '°', '--&gt'] # filter out these strings from the text (extend this list as needed...) #typos and other words not caught by the real words list
+	lemma = True
+	lower = True #treat all words as lower case
+	attested = False #filter output using real words list?
+	spaces = [" ","  ","   ","    "] #need to add more here
+	override = [] #items the system ignores that should be overridden
+	posignore = []
+	numbers = ["NUM"] #pos_ tag for numbers
+	nonumbers = False
+	connect = "__" #for connecting ngrams
+	contentPOS = [] #can be added, blank for now
+	contentLemIgnore = [] #can be added, blank for now
+
+class ld_params_de_trf: #German ld parameters (from Montanari and Montanari)
+	lang = "de"
+	model = "de_dep_news_trf"
+	nlp = None
+	punctuation = list(set((['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']+['[', ']', '„', '“', '”', '*', '/', '..', '...', '....', '.....', '........', '«', '»'])))
+	punctse = [".","?","!"]
+	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
+	splitter = "\n" #for splitting paragraphs
+	rwl = []
+	sp = True
+	sspl = "spacy"
+	pos = None #other options are "pos" for Penn tags and "upos" for universal tags
+	removel = [':)', '):', '=P', '=)', ':p', '°', '--&gt'] # filter out these strings from the text (extend this list as needed...) #typos and other words not caught by the real words list
+	lemma = True
+	lower = True #treat all words as lower case
+	attested = False #filter output using real words list?
+	spaces = [" ","  ","   ","    "] #need to add more here
+	override = [] #items the system ignores that should be overridden
+	posignore = []
+	numbers = ["NUM"] #pos_ tag for numbers
+	nonumbers = False
+	connect = "__" #for connecting ngrams
+	contentPOS = [] #can be added, blank for now
+	contentLemIgnore = [] #can be added, blank for now
+
+
+class TokObject():
 	def spacy_morph(self, tag_string,ud_tag):
 		if ud_tag in ["AUX","VERB"]:
 			morph_list = []
@@ -339,6 +400,23 @@ class TokObject(): #need to add
 			self.preIgnoreReasons.append("Numbers Ignored")
 
 class Normalize: #working copy complete, still need to streamline functions; still needs to be debugged
+	def preprocess_de(self,text): #from Montanari and Montanari
+		"""
+		Preprocess the input text by, for example, replacing gender-neutral language or correcting misspellings.
+		
+		Args:
+			text (str): The input text to preprocess.
+		
+		Returns:
+			str: The preprocessed text.
+		"""
+
+		# replace gender-neutral language forms '/innen' and ':innen' by '_innen' to avoid tokenization errors
+		text = re.sub(r"(\w\w*)(/innen|:innen)", r"\g<1>_innen", text)
+
+		# optional: manually correct misspelled words to avoid them being counted as two separate types
+		text = text.replace('Fehlschreibbbungen', 'Fehlschreibungen').replace('Fehlschreiiibungen', 'Fehlschreibungen')
+		return text
 
 	def text2tok(self,text, params = parameters): #punctuation defaults to the params class definition.
 		#punctuation = params.punctuation,realwords = params.rwl, sp = params.sp
@@ -355,6 +433,8 @@ class Normalize: #working copy complete, still need to streamline functions; sti
 				tok_text.append(TokObject(token,counter,params))
 				counter +=1
 		else: #if sp == True, rely on Spacy for tokenization
+			if params.lang == "de": #preprocessing for German
+				text = self.preprocess_de(text)
 			text = text.replace("\n"," ")
 			for token in params.nlp(text):
 				tok_text.append(TokObject(token,counter,params))#realwords relies on a global variable
@@ -392,7 +472,7 @@ class Normalize: #working copy complete, still need to streamline functions; sti
 		#punctse = params.punctse,punctuation = params.punctuation, realwords = params.rwl, sp = params.sp, sspl = params.sspl
 		tok_texts = []
 		if params.sp == True: #message if spacy is selected but not available
-			if statusd["spld"] == False or statusd["mdld"] == False: #global variables that indicate whether spacy itself and a spacy model has been loaded
+			if statusd["spld"] == False or params.model == None: #global variables that indicate whether spacy itself and a spacy model has been loaded
 				print("Spacy processing selected, but either spacy and/or the spacy nlp model is not available. Defaulting to simple rule-based tokenization.")
 				params.sp = False
 				params.sspl = "simple" #this is not ideal in this case
@@ -431,7 +511,7 @@ class Normalize: #working copy complete, still need to streamline functions; sti
 		if params.lower == True:
 			outstr = outstr.lower()
 
-		if params.pos == None or statusd["spld"] == False or statusd["mdld"] == False: #if params say no pos or spacy isn't loaded:
+		if params.pos == None or statusd["spld"] == False or params.nlp == None: #if params say no pos or spacy isn't loaded:
 			return(outstr)
 		
 		else:

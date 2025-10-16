@@ -168,9 +168,11 @@ To process texts with basic features, simply change parameters.sp to `True`. The
 **Example 1 (Spanish), advanced features**:
 There are currently two pre-made parameter classes for Spanish. One uses a faster (but slightly less accurate) tagging and parsing model (parameters_es, which uses the "es_core_news_sm" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process Spanish texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
 
-If either of these models are installed prior to importing pylats, you can simply use the appropriate parameter class.
+Note that you will need to download and load an appropriate spacy model for these to work.
+
 
 ```python
+lats.parameters_es_trf.nlp = lats.load_model("es_dep_news_trf") #load Spanish language model
 span_sample = lats.Normalize("Me gustaría aqua con gas.",lats.parameters_es_trf) #process text
 print(span_sample.toks)
 ```
@@ -183,6 +185,7 @@ If we want to create a lemmatized representation of a text and add part of speec
 
 ```python
 parameters_es_lemmas = lats.parameters_es_trf()
+parameters_es_lemmas.nlp = lats.load_model("es_dep_news_trf") #load Spanish language model
 parameters_es_lemmas.lemma = True #set lemma to True
 parameters_es_lemmas.pos = "pos" #set pos tags to universal pos + fine-grained verb POS tags (universal pos + mood/tense)
 
@@ -194,7 +197,38 @@ print(span_sample_lemma.toks)
 ['yo_PRON', 'gustar_VERB_Cnd', 'aqua_ADJ', 'con_ADP', 'gas_NOUN']
 ```
 
-**Example 2 (Korean), basic features**:
+**Example 2 (German), advanced features**:
+There are currently two pre-made parameter classes for German. One uses a faster (but slightly less accurate) tagging and parsing model (ld_params_de, which uses the "ld_params_de_trf" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process German texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
+
+If either of these models are installed prior to importing pylats, you can simply use the appropriate parameter class.
+
+```python
+lats.parameters_es_trf.nlp = lats.load_model("de_core_news_sm") #load German language model
+de_sample = lats.Normalize("Ich esse gerne Apfelstrudel.",lats.ld_params_de) #process text
+print(de_sample.toks)
+```
+
+```
+[['ich', 'essen', 'gerne', 'apfelstrudel']]
+```
+
+If we want to create a lemmatized representation of a text and add part of speech tags, we can create a slightly altered version of our parameters class:
+
+```python
+ld_params_de_lemmas = lats.ld_params_de()
+ld_params_de_lemmas.nlp = lats.load_model("de_core_news_sm") #load German language model
+ld_params_de_lemmas.lemma = True #set lemma to True
+ld_params_de_lemmas.pos = "upos" #set pos tags to universal pos tags
+
+de_sample_lemma = lats.Normalize("Ich esse gerne Apfelstrudel.",ld_params_de_lemmas) #process text
+print(de_sample_lemma.toks)
+```
+
+```
+['ich_PRON', 'essen_VERB', 'gerne_ADV', 'apfelstrudel_NOUN']
+```
+
+**Example 3 (Korean), basic features**:
 
 ```python
 whtsp_params = lats.parameters() #copy parameters
