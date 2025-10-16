@@ -203,7 +203,7 @@ There are currently two pre-made parameter classes for German. One uses a faster
 If either of these models are installed prior to importing pylats, you can simply use the appropriate parameter class.
 
 ```python
-lats.parameters_es_trf.nlp = lats.load_model("de_core_news_sm") #load German language model
+lats.ld_params_de.nlp = lats.load_model("de_core_news_sm") #load German language model
 de_sample = lats.Normalize("Ich esse gerne Apfelstrudel.",lats.ld_params_de) #process text
 print(de_sample.toks)
 ```
