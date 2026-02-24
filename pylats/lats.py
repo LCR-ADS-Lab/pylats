@@ -215,7 +215,7 @@ class FrDefault: #For French.#Eva is using 3.7.6;TRF 3.7.2 - Kris is currently u
 	advMannerSuff = ["ment"]
 	advMannerLex = ["bien","mieux","mal","pire","vite","fort"]
 	includeCwFw = True
-	deprels = ["nsubj","dobj","amod","advmod"]
+	deprels = ["nsubj","obj","amod","advmod"]
 	depOrder = "dep2head" #options are "dep2head" or "orderofA"
 	lemma = True
 	lower = True #treat all words as lower case
