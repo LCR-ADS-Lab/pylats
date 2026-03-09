@@ -6,13 +6,14 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".55" #update encoding issues
+version = ".56" #Add cc100 to conllu capability
 #need to test numbers.
 import math
 import os
 import pickle
 import json
 import glob
+import lzma
 from operator import itemgetter
 import statistics as stat
 from collections import Counter
@@ -701,6 +702,37 @@ def corpus2Conllu(sourceFiles,targetLoc,params, suffList = [".txt"],verbose = Tr
 		outf.write("\n\n".join(outSents))
 		outf.flush()
 		outf.close()
+
+def cc100corpus2Conllu(xzName,targetDir, params, batchSize = 100,total_batches = 500000): #simple params
+	batch_sents = []
+	n_batches = 0
+	with lzma.open(xzName, mode='rt', encoding='utf-8') as file:
+		for line in file:
+	# big_file = open(x,"rb")
+			batch_sents.append(line)
+			if len(batch_sents) == batchSize:
+
+		#print(tFile[:100])
+				processedFile = lats.preProcess("".join(batch_sents), params)
+				outSents = []
+				for para in processedFile.parasto:
+					for sent in para:
+						outsent = []
+						for token in sent:
+							outTok = [token.idx,token.text,token.lemma,token.upos,token.xpos,token.morph,token.idxHead,token.deprel,"_","_"]
+							outsent.append("\t".join([str(x) for x in outTok]))
+						outSents.append("\n".join(outsent))
+				
+				with open(targetDir + "frcc100_" + str(n_batches) + ".conllu","w", encoding="utf-8") as outf:
+					outf.write("\n\n".join(outSents))
+				
+				batch_sents = []
+				n_batches += 1
+				if int(n_batches/1000) == n_batches/1000:
+					print(n_batches)
+				if n_batches == total_batches:
+					break
+	print("Converted",str(n_batches), "texts")
 
 class freqConllu(): #added 2025-03-18
 	def freq_add(self,d,item):
