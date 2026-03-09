@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".56" #Add cc100 to conllu capability
+version = ".57" #Add more detailed normalization options
 #need to test numbers.
 import math
 import os
@@ -164,6 +164,7 @@ class EnDefault:
 	lower = True #treat all words as lower case
 	pos = "upos" #other options are "pos" for Penn tags and "upos" for universal tags
 	morphs = None #can also be None
+	morphsExtra = None #for more complicated situations
 
 class EsDefault: #these are for the Spanish parameters - these need to be updated
 	lang = "es"
@@ -193,6 +194,7 @@ class EsDefault: #these are for the Spanish parameters - these need to be update
 	lower = True #treat all words as lower case?
 	pos = "upos" #options are "xpos","upos", or None
 	morphs = ["Mood","Tense"] #can also be None - Add morphological information to words?
+	morphsExtra = None #for more complicated situations
 
 class FrDefault: #For French.#Eva is using 3.7.6;TRF 3.7.2 - Kris is currently using 3.7.2
 	lang = "fr"
@@ -222,6 +224,7 @@ class FrDefault: #For French.#Eva is using 3.7.6;TRF 3.7.2 - Kris is currently u
 	lower = True #treat all words as lower case
 	pos = "upos" #other options are "pos" for fine-grained tags,"upos" for universal tags, or None - (these are the same in French)
 	morphs = ["Mood","Tense"] #can also be None
+	morphsExtra = [{"key":"VerbForm","value":"Part","morphs":["Gender","Number"]}] #for more complicated situations
 
 class TokObject():
 	def __init__(self, token = None,counter = 0,charD = None): #see parameters object for all relevant variables
@@ -521,14 +524,42 @@ class Normalize:
 								tokOutL.append(token.upos)
 							if params.pos == "pos":
 								tokOutL.append(token.xpos)
-						if params.morphs != None:
+
+						if params.morphs != None: #updated in version .57 on 2026-03-09
 							#print(str(token.morph))
 							if token.morph not in [None,""," "]:
-								convMorph = [x.split("=")[1] for x in token.morph.split("|") if x.split("=")[0] in params.morphs]
-								refinedMorph = [x for x in convMorph if x not in [""]]
+								morph_list = []
+								morphs = str(tag_string).split("|") #split the morphology output into a list
+								morphDict = {}
+								for x in morphs:
+									item = x.split("=")
+									morphDict[item[0]] = item[1]
+								for m in params.morphs:
+									if m in morphDict:
+										morph_list.append(morphDict[m])
+								#convMorph = [x.split("=")[1] for x in token.morph.split("|") if x.split("=")[0] in params.morphs]
+								refinedMorph = [x for x in morph_list if x not in [""]]
 								if len(refinedMorph) >= 1:
 									tokOutL.append((params.wordConnect).join(refinedMorph))
 								#tokOutL.append((params.wordConnect).join([x.split("=")[1] for x in token.morph.split("|") if x.split("=")[0] in params.morphs]))
+						if params.morphsExtra != None: #added in v .57 on 2026-03-09
+							if token.morph not in [None,""," "]:
+								morph_list = []
+								morphs = str(tag_string).split("|") #split the morphology output into a list
+								morphDict = {}
+								for x in morphs:
+									item = x.split("=")
+									morphDict[item[0]] = item[1]
+								for d in morphsExtra:
+									if d["key"] in morphDict and morphDict[d["key"]] == d["value"]:
+										for m in d["morphs"]:
+											if m in morphDict:
+												morph_list.append(morphDict[m])
+								
+								refinedMorph = [x for x in morph_list if x not in [""]]
+								if len(refinedMorph) >= 1:
+									tokOutL.append((params.wordConnect).join(refinedMorph))
+
 						if token.cwfw != None and params.includeCwFw == True:
 							tokOutL.append(token.cwfw)
 						if len(tokOutL) == 1:
