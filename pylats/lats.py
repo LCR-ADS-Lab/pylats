@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".58" #Add more detailed normalization options
+version = ".61" #Add mwu adjustments to normalize
 #need to test numbers.
 import math
 import os
@@ -102,6 +102,7 @@ class EnSmp:
 	splitter = "\n" #paragraph splitter
 	sspl = "simple" #sentence split
 	punctse = [".","?","!"]
+	mwuDict = None
 
 class EnSm:
 	sp = True
@@ -110,6 +111,7 @@ class EnSm:
 	nlp = None
 	sspl = "spacy"
 	punctse = [".","?","!"]
+	mwuDict = None
 
 class EnTrf:
 	sp = True
@@ -118,6 +120,7 @@ class EnTrf:
 	nlp = None
 	sspl = "spacy"
 	punctse = [".","?","!"]
+	mwuDict = None
 
 class EsTrf:
 	sp = True
@@ -126,6 +129,7 @@ class EsTrf:
 	nlp = None
 	sspl = "spacy"
 	punctse = [".","?","!"]
+	mwuDict = None
 
 class FrTrf:
 	sp = True
@@ -134,6 +138,7 @@ class FrTrf:
 	nlp = None
 	sspl = "spacy"
 	punctse = [".","?","!"]
+	mwuDict = {"quelque+chose":{"w1Head":False,"uposNew":"PRON","xposNew":"PRON"}} #in the French Model, token.xpos and token.upos are both upos tags.
 
 #other parameters:
 class EnDefault:
@@ -209,7 +214,7 @@ class FrDefault: #For French.#Eva is using 3.7.6;TRF 3.7.2 - Kris is currently u
 	attested = True #filter output using real words list?
 	spaces = [" ","  ","   ","    "]  #need to add more here?
 	override = [] 
-	posignore = ["PROPN","SPACE"] #Which POS to ignore? Kris + Eva decided to ignore proper nouns (2025-03-17)
+	posignore = ["PROPN","SPACE","MWU"] #Which POS to ignore? Kris + Eva decided to ignore proper nouns (2025-03-17); Kris added "MWU" on 2026-03-11
 	numbers = ["NUM"] # None is also OK #pos_ tag for numbers; Kris and Eva decided to see if we can exclude digits but include written words.
 	wordConnect = "_"
 	ngramConnect = "__" #for connecting ngrams
@@ -249,6 +254,7 @@ class TokObject():
 			self.tokOut = None
 			self.bgOut = None
 			self.depbgOut = None
+			self.mwu = None
 
 		else:
 			self.text = token
@@ -270,13 +276,45 @@ class TokObject():
 			self.tokOut = None
 			self.bgOut = None
 			self.depbgOut = None
+			self.mwu = None
 
 			#print("Error: Expected spacy token or string, got", str(type(token)),"instead")
 		self.attrs = {} #attributes can be added to this as needed
 		#real words
 
 class preProcessConllu:
-	def conllu2tokp(self,conlluText):
+	def mwuAdjust(self,tokSent,mwuDict): #{} #organized by mwu; only bgs for now #{"quelque+chose":{"w1Head":False,"uposNew":"PRON","xposNew":"PRON"}}
+		for idx, token in enumerate(tokSent):
+			if idx >= len(tokSent)-1: #skip last token of sentence (can't make forward bigram)
+				continue
+			target = "+".join([token.text.lower(),tokSent[idx+1].text.lower()])
+			if target in mwuDict:
+				#if tokSent[idx+1].text.lower() == mwuDict[target]["w2"]:
+				if mwuDict[target]["w1Head"] == True:
+					tokSent[idx+1].deprel = "mwu"
+					tokSent[idx+1].upos = "MWU"
+					tokSent[idx+1].xpos = "MWU"
+					tokSent[idx+1].idxHead = idx
+					tokSent[idx].upos = mwuDict[target]["uposNew"]
+					tokSent[idx].xpos = mwuDict[target]["xposNew"]
+					tokSent[idx].mwu = target
+					for token in tokSent:
+						if token.idxHead == idx+1:
+							token.idxHead = idx
+				else:
+					tokSent[idx].deprel = "mwu"
+					tokSent[idx].upos = "MWU"
+					tokSent[idx].xpos = "MWU"
+					tokSent[idx].idxHead = idx +1
+					tokSent[idx+1].upos = mwuDict[target]["uposNew"]
+					tokSent[idx+1].xpos = mwuDict[target]["xposNew"]
+					tokSent[idx+1].mwu = target
+					for token in tokSent:
+						if token.idxHead == idx:
+							token.idxHead = idx + 1
+		return(tokSent)
+			
+	def conllu2tokp(self,conlluText,params):
 		paras = []
 		para = []
 		for sent in conlluText.split("\n\n"):
@@ -299,6 +337,9 @@ class preProcessConllu:
 				tok.deprel = tokInfo[7]
 				tok.nchars = len(tokInfo[1])
 				sentToks.append(tok)
+			if params != None:
+				if params.mwuDict != None:
+					sentToks = self.mwuAdjust(sentToks,params.mwuDict)
 			para.append(sentToks)
 		paras.append(para)
 		return(paras)
@@ -314,7 +355,7 @@ class preProcessConllu:
 	def sent2tok(self,senttok):
 		return([y for x in senttok for y in x])
 
-	def __init__ (self, text = None):
+	def __init__ (self, text = None, params = None):
 		#print(param.abbrvs)
 		if text == None:
 			self.paras = None
@@ -325,11 +366,42 @@ class preProcessConllu:
 			self.toktxt = None
 		else:
 			#self.tokens = self.text2tok(text) #tokenized data
-			self.parasto = self.conllu2tokp(text) #TokObject tokens ([[[]]]) [para[sent[tok]]]
+			self.parasto = self.conllu2tokp(text,params) #TokObject tokens ([[[]]]) [para[sent[tok]]]
 			self.sentsto = self.para2sent(self.parasto) #TokObject tokens ([[]]) [sent[tok]]
 			self.toksto = self.sent2tok(self.sentsto) #TokObject tokens ([]) [tok]
 
 class preProcess:
+	def mwuAdjust(self,tokSent,mwuDict): #{} #organized by mwu; only bgs for now #{"quelque+chose":{"w1Head":False,"uposNew":"PRON","xposNew":"PRON"}}
+		for idx, token in enumerate(tokSent):
+			if idx >= len(tokSent)-1: #skip last token of sentence (can't make forward bigram)
+				continue
+			target = "+".join([token.text.lower(),tokSent[idx+1].text.lower()])
+			if target in mwuDict:
+				#if tokSent[idx+1].text.lower() == mwuDict[target]["w2"]:
+				if mwuDict[target]["w1Head"] == True:
+					tokSent[idx+1].deprel = "mwu"
+					tokSent[idx+1].upos = "MWU"
+					tokSent[idx+1].xpos = "MWU"
+					tokSent[idx+1].idxHead = idx
+					tokSent[idx].upos = mwuDict[target]["uposNew"]
+					tokSent[idx].xpos = mwuDict[target]["xposNew"]
+					tokSent[idx].mwu = target
+					for token in tokSent:
+						if token.idxHead == idx+1:
+							token.idxHead = idx
+				else:
+					tokSent[idx].deprel = "mwu"
+					tokSent[idx].upos = "MWU"
+					tokSent[idx].xpos = "MWU"
+					tokSent[idx].idxHead = idx +1
+					tokSent[idx+1].upos = mwuDict[target]["uposNew"]
+					tokSent[idx+1].xpos = mwuDict[target]["xposNew"]
+					tokSent[idx+1].mwu = target
+					for token in tokSent:
+						if token.idxHead == idx:
+							token.idxHead = idx + 1
+		return(tokSent)
+	
 	def text2tok(self,text, params): #punctuation defaults to the params class definition.
 		#punctuation = params.punctuation,realwords = params.rwl, sp = params.sp
 		counter = 0	
@@ -385,11 +457,13 @@ class preProcess:
 					for token in sent:
 						charD[token.idx] = counter
 						counter +=1
-					toks = []
+					toks = [] #this is a sentence
 					counter = 0 #reset counter
-					for token in sent:
+					for token in sent: 
 						toks.append(TokObject(token, counter,charD))
 						counter +=1
+					if params.mwuDict != None:
+						toks = self.mwuAdjust(toks,params.mwuDict)
 					tok_texts.append(toks)
 			if params.sspl == "simple":
 				for sent in self.text2sent(text, params):
@@ -511,7 +585,9 @@ class Normalize:
 
 					if token.preIgnore == False:
 						tokOutL = []
-						if params.lemma == False:
+						if token.mwu != None:
+							preTok = token.mwu
+						elif params.lemma == False:
 							preTok = token.text
 						else:
 							preTok = token.lemma
