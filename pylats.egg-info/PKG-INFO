@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pylats
-Version: 0.40
+Version: 0.63.1
 Summary: Text preprocessing for downstream linguistic analyses
 Home-page: https://github.com/LCR-ADS-Lab/pylats
 Author: Kristopher Kyle
@@ -8,18 +8,20 @@ Author-email: kristopherkyle1@gmail.com
 Classifier: Programming Language :: Python :: 3
 Classifier: Operating System :: OS Independent
 Description-Content-Type: text/markdown
+Requires-Dist: taaled
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier
 Dynamic: description
 Dynamic: description-content-type
 Dynamic: home-page
+Dynamic: requires-dist
 Dynamic: summary
 
 # Python Linguistic Analysis Tools (pylats)
 Pylats is designed to perform text pre-processing for further linguistic analyses (e.g., measuring lexical diversity and/or lexical sophistication).  Currently, advanced features such as lemmatization and POS tagging are available for English, with other languages to follow (Spanish models will be added in the near future, we have plans to release other models as well). However, pylats CAN currently be used with other languages using basic features (see examples below).
 
-Pylats currently uses [spacy](https://spacy.io/) as a starting point for many of its advanced features if working with English. Pylats was tested using spacy version 3.2 and be default uses the "en_core_web_sm" model. To install spacy and a language model, see the [spacy installation instructions](https://spacy.io/).
+Pylats currently uses [spacy](https://spacy.io/) as a starting point for many of its advanced features. Pylats can be adapted for use with any language with a spacy model. Our team has worked with English, Spanish, French, German, and Korean. Pylats has been tested using spacy version 3.7. To install spacy and a language model, see the [spacy installation instructions](https://spacy.io/).
 
 ## Installation
 To install pylats, you can use `pip`:
@@ -36,24 +38,45 @@ from pylats import lats
 ### Using pylats
 `pylats` is designed to be the first step in conducting linguistic analyses using related analysis tools (such as `lexical-diversity`).
 
-`pylats` uses the `Normalize` class to take a raw text string and format it:
+First, load a spacy model using an appropriate language class. While pylats comes with a few pre-built language classes, users can always create custom language classes.
+
+```python
+lats.load_model(lats.EnSm) #English Small Model ("en_core_web_sm")
+
+# class EnSm:
+# 	sp = True # use spacy?
+# 	model = "en_core_web_sm" # which spacy model to use
+# 	splitter = "\n" # paragraph separator
+# 	nlp = None # after "load_model" is run, this will be the spacy model higlighted above
+# 	sspl = "spacy" # use spacy to split sentences
+# 	punctse = [".","?","!"] # what is used to split sentences if spacy is not used
+#	mwuDict = None #Currently used in French; {"quelque+chose":{"idxHead":1,"uposNew":"PRON","xposNew":"PRON"}} #in the French Model, token.xpos and token.upos are both upos tags. For "idxHead", 0 means the first word is the syntactic head according to spacy, 2 means the second word is the head, etc. 
+```
+
+Second, create a version of your text that has been processed by spacy using an appropriate language class (in this case lats.EnSm):
 
 ```python
 teststr = "I love pepperoni pizza."
-normed = lats.Normalize(teststr) #processed text string
+preToks = lats.preProcess(teststr,lats.EnSm)
+```
+
+Finally, we format the text via the `Normalize` class and the default English word definition parameters class `lats.EnDefault` to format the text (which includes the lemma, part of speech tag, and whether the word is a content word "cw" or function word "fw"):
+
+```python
+normed = lats.Normalize(preToks,lats.EnDefault) #processed text string
 print(normed.toks)
 ```
 
 ```
 #output:
-['i', 'love', 'pepperoni', 'pizza']
+['i_PRON_fw', 'love_VERB_cw', 'pepperoni_NOUN_cw', 'pizza_NOUN_cw']
 ```
 
 ### Paragraphs and sentences
 The `.toks` method will provide a flat list of the tokens in a text. However, it can often be useful to conduct analyses at the sentence and/or paragraph level. The `.sents` and `.paras` methods provide a representation of text with nested lists.
 
 ```python
-teststr = """I love pepperoni pizza. Sometimes I like to add feta and banana peppers.
+para_sample = """I love pepperoni pizza. Sometimes I like to add feta and banana peppers.
 This is a second paragraph. In the original string there is a newline character before this paragraph."""
 
 normedp = lats.Normalize(para_sample)
@@ -64,7 +87,7 @@ normedp = lats.Normalize(para_sample)
 print(normedp.toks)
 ```
 ```
-['i', 'love', 'pepperoni', 'pizza', 'sometimes', 'i', 'like', 'to', 'add', 'feta', 'and', 'banana', 'peppers', 'this', 'is', 'a', 'second', 'paragraph', 'in', 'the', 'original', 'string', 'there', 'is', 'a', 'newline', 'character', 'before', 'this', 'paragraph']
+['i_PRON_fw', 'love_VERB_cw', 'pepperoni_NOUN_cw', 'pizza_NOUN_cw', 'sometimes_ADV_fw', 'i_PRON_fw', 'like_VERB_cw', 'to_PART_fw', 'add_VERB_cw', 'feta_NOUN_cw', 'and_CCONJ_fw', 'banana_NOUN_cw', 'pepper_NOUN_cw', 'this_PRON_fw', 'be_AUX_fw', 'a_DET_fw', 'second_ADJ_cw', 'paragraph_NOUN_cw', 'in_ADP_fw', 'the_DET_fw', 'original_ADJ_cw', 'string_NOUN_cw', 'there_PRON_fw', 'be_VERB_cw', 'a_DET_fw', 'character_NOUN_cw', 'before_ADP_fw', 'this_DET_fw', 'paragraph_NOUN_cw']
 ```
 #### sentences
 ```python
@@ -73,191 +96,81 @@ for x in normedp.sents:
 ```
 
 ```
-['i', 'love', 'pepperoni', 'pizza']
-['sometimes', 'i', 'like', 'to', 'add', 'feta', 'and', 'banana', 'peppers']
-['this', 'is', 'a', 'second', 'paragraph']
-['in', 'the', 'original', 'string', 'there', 'is', 'a', 'newline', 'character', 'before', 'this', 'paragraph']
+['i_PRON_fw', 'love_VERB_cw', 'pepperoni_NOUN_cw', 'pizza_NOUN_cw']
+['sometimes_ADV_fw', 'i_PRON_fw', 'like_VERB_cw', 'to_PART_fw', 'add_VERB_cw', 'feta_NOUN_cw', 'and_CCONJ_fw', 'banana_NOUN_cw', 'pepper_NOUN_cw']
+['this_PRON_fw', 'be_AUX_fw', 'a_DET_fw', 'second_ADJ_cw', 'paragraph_NOUN_cw']
+['in_ADP_fw', 'the_DET_fw', 'original_ADJ_cw', 'string_NOUN_cw', 'there_PRON_fw', 'be_VERB_cw', 'a_DET_fw', 'character_NOUN_cw', 'before_ADP_fw', 'this_DET_fw', 'paragraph_NOUN_cw']
 ```
 
 #### paragraphs
 ```
-for x in normed.paras:
+for x in normedp.paras:
 	print(x) #print sentences each paragraph
 ```
 ```
-[['i', 'love', 'pepperoni', 'pizza'], ['sometimes', 'i', 'like', 'to', 'add', 'feta', 'and', 'banana', 'peppers']]
-[['this', 'is', 'a', 'second', 'paragraph'], ['in', 'the', 'original', 'string', 'there', 'is', 'a', 'newline', 'character', 'before', 'this', 'paragraph']]
-```
-
-### Changing parameters
-By default, `Normalize` simply removes punctuation and converts words in the text to lower case. However, a wide range of customizations can be made by adjusting the `parameters` class.
-
-For example, it may be useful to exclude particular words for some analyses. In studies of lexical diversity, for instance, we probably don't want to include misspelled words (misspelled words would positively contribute to diversity scores, but probably shouldn't). Pylats includes a default list of "real" words drawn from a large corpus of English language which can be used to filter out misspelled ones. Words can also be added to a list of items to remove OR can be added to a list that overrides other lists.
-
-Below, we create a copy of `parameters` and then make some changes:
-
-```python
-new_params = lats.parameters() #create a copy of the parameters class
-new_params.attested = True #set the attested attribute to True
-```
-**Output with default settings:**
-
-```python
-#with default settings
-msp_default = lats.Normalize("This is a smaple sentence")
-print(msp_default.toks)
-```
-
-```
-['this', 'is', 'a', 'smaple', 'sentence']
-```
-
-**Output with new settings:**
-
-```python
-msp_new = lats.Normalize("This is a smaple sentence", params = new_params)
-print(msp_new.toks)
-```
-
-```
-['this', 'is', 'a', 'sentence']
+[['i_PRON_fw', 'love_VERB_cw', 'pepperoni_NOUN_cw', 'pizza_NOUN_cw'], ['sometimes_ADV_fw', 'i_PRON_fw', 'like_VERB_cw', 'to_PART_fw', 'add_VERB_cw', 'feta_NOUN_cw', 'and_CCONJ_fw', 'banana_NOUN_cw', 'pepper_NOUN_cw']]
+[['this_PRON_fw', 'be_AUX_fw', 'a_DET_fw', 'second_ADJ_cw', 'paragraph_NOUN_cw'], ['in_ADP_fw', 'the_DET_fw', 'original_ADJ_cw', 'string_NOUN_cw', 'there_PRON_fw', 'be_VERB_cw', 'a_DET_fw', 'character_NOUN_cw', 'before_ADP_fw', 'this_DET_fw', 'paragraph_NOUN_cw']]
 ```
 
 #### Default parameters
+The default parameters for English are included below.
+
 ```python
-class parameters: #default English parameters
+class EnDefault:
 	lang = "en"
-	model = "en_core_web_sm"
-	try:
-		nlp = nlp_en_sm
-	except NameError:
-		nlp = None
 	punctuation = ['``', "''", "'", '.', ',', '?', '!', ')', '(', '%', '/', '-', '_', '-LRB-', '-RRB-', 'SYM', ':', ';', '"']
 	punctse = [".","?","!"]
 	abbrvs = ["mrs.","ms.","mr.","dr.","phd."]
 	splitter = "\n" #for splitting paragraphs
-	rwl = en_rwl
+	rwl = en_rwl #list of attested English words
 	sp = True
 	sspl = "spacy"
-	pos = None #other options are "pos" for Penn tags and "upos" for universal tags
 	removel = ['becuase'] #typos and other words not caught by the real words list
-	lemma = False
-	lower = True #treat all words as lower case
-	attested = False #filter output using real words list?
+	attested = True #filter output using real words list?
 	spaces = [" ","  ","   ","    "] #need to add more here
 	override = [] #items the system ignores that should be overridden
-	posignore = []
+	posignore = ["PROPN"] #ignore proper nouns
 	numbers = ["NUM"] #pos_ tag for numbers
-	nonumbers = True
-	connect = "__" #for connecting ngrams
-	contentPOS = [] #can be added, blank for now
+	wordConnect = "_"
+	ngramConnect = "__" #for connecting ngrams
+	contentPOS = ["VERB","NOUN","PROPN","ADJ","ADV"] #note that PROPN will be overridden by posignore in this case
+	advMannerSuff = ["ly"]
+	advMannerLex = ["well"]
+	includeCwFw = True
 	contentLemIgnore = [] #can be added, blank for now
+	deprels = ["nsubj","dobj","amod","advmod"]
+	depOrder = "dep2head" #options are "dep2head" or "orderofA"
+	lemma = True
+	lower = True #treat all words as lower case
+	pos = "upos" #other options are "pos" for Penn tags and "upos" for universal tags
+	morphs = None #Currently used in Spanish and French
+	morphsExtra = None #for more complicated situations; Currently used in French
+
 ``` 
 
-### Adding part of speech information
-If spacy is installed (and activated), part of speech tags can be added to each token, which can be useful in disambiguating homographic tokens (e.g., **_run_** as a verb in the sentence _I like to **run**._ versus run as a noun in the sentence _I went for a **run**._ ). This is helpful in a number of applications, including calculating indices lexical diversity.
+## Other languages
+Any language with a Spacy model can be used with Pylats with some adaptation. Currently, pre-built parameter settings are available for the following languages:
 
-```python
-pos_params = lats.parameters() 
-pos_params.pos = "upos" #for large-grained universal parts of speech
-run_sample = lats.Normalize("I like to run. I went for a run.", params = pos_params)
-for x in run_sample.sents:
-	print(x)
-```
+### English
+Use `EnSm` or `EnTrf` for preprocessing.
 
-```
-['i_PRON', 'like_VERB', 'to_PART', 'run_VERB']
-['i_PRON', 'went_VERB', 'for_ADP', 'a_DET', 'run_NOUN']
-```
-### Changing the spacy language model
+Use `EnDefault` for normalizing
 
-To change the spacy language model that is used by pylats, first make sure that the desired model has been downloaded from [spacy](https://spacy.io/). The preferred method to load models is to create a parameter class that includes the appropriate model (for easier replicability), then use the following command:
+### French
+Use `FrTrf` for preprocessing.
 
-```python
-myparameters.model = "en_core_web_trf"
-myparameters.nlp = lats.load_model(lats.myparameters.model)
-```
+Use `FrDefault` for normalizing
 
-## Using pylats with languages other than English
-Pylats currently has advanced features available for English and Spanish texts and basic features for other languages. As the tool expands, advanced feature support will be added for other languages (let us know what languages you would like to see supported!).
+### German
+Use `DeTrf` for preprocessing.
 
-To process texts with basic features, simply change parameters.sp to `True`. The processor will treat text between whitespace as a token. Accordingly, some pre-processing may be necessary.
+Use `DeDefault` for normalizing
 
-**Example 1 (Spanish), advanced features**:
-There are currently two pre-made parameter classes for Spanish. One uses a faster (but slightly less accurate) tagging and parsing model (parameters_es, which uses the "es_core_news_sm" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process Spanish texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
+### Spanish
+Use `EsTrf` for preprocessing.
 
-Note that you will need to download and load an appropriate spacy model for these to work.
+Use `EsDefault` for normalizing
 
-
-```python
-lats.parameters_es_trf.nlp = lats.load_model("es_dep_news_trf") #load Spanish language model
-span_sample = lats.Normalize("Me gustaría aqua con gas.",lats.parameters_es_trf) #process text
-print(span_sample.toks)
-```
-
-```
-['me', 'gustaría', 'aqua', 'con', 'gas']
-```
-
-If we want to create a lemmatized representation of a text and add part of speech tags, we can create a slightly altered version of our parameters class:
-
-```python
-parameters_es_lemmas = lats.parameters_es_trf()
-parameters_es_lemmas.nlp = lats.load_model("es_dep_news_trf") #load Spanish language model
-parameters_es_lemmas.lemma = True #set lemma to True
-parameters_es_lemmas.pos = "pos" #set pos tags to universal pos + fine-grained verb POS tags (universal pos + mood/tense)
-
-span_sample_lemma = lats.Normalize("Me gustaría aqua con gas.",parameters_es_lemmas) #process text
-print(span_sample_lemma.toks)
-```
-
-```
-['yo_PRON', 'gustar_VERB_Cnd', 'aqua_ADJ', 'con_ADP', 'gas_NOUN']
-```
-
-**Example 2 (German), advanced features**:
-There are currently two pre-made parameter classes for German. One uses a faster (but slightly less accurate) tagging and parsing model (ld_params_de, which uses the "ld_params_de_trf" spacy model). The second uses a slower (but more accurate) tagging and parsing model (parameters_es_trf, which uses the "es_dep_news_trf" model). To process German texts, first be sure to download the appropriate model from [spacy](https://spacy.io/).
-
-If either of these models are installed prior to importing pylats, you can simply use the appropriate parameter class.
-
-```python
-lats.parameters_es_trf.nlp = lats.load_model("de_core_news_sm") #load German language model
-de_sample = lats.Normalize("Ich esse gerne Apfelstrudel.",lats.ld_params_de) #process text
-print(de_sample.toks)
-```
-
-```
-[['ich', 'essen', 'gerne', 'apfelstrudel']]
-```
-
-If we want to create a lemmatized representation of a text and add part of speech tags, we can create a slightly altered version of our parameters class:
-
-```python
-ld_params_de_lemmas = lats.ld_params_de()
-ld_params_de_lemmas.nlp = lats.load_model("de_core_news_sm") #load German language model
-ld_params_de_lemmas.lemma = True #set lemma to True
-ld_params_de_lemmas.pos = "upos" #set pos tags to universal pos tags
-
-de_sample_lemma = lats.Normalize("Ich esse gerne Apfelstrudel.",ld_params_de_lemmas) #process text
-print(de_sample_lemma.toks)
-```
-
-```
-['ich_PRON', 'essen_VERB', 'gerne_ADV', 'apfelstrudel_NOUN']
-```
-
-**Example 3 (Korean), basic features**:
-
-```python
-whtsp_params = lats.parameters() #copy parameters
-whtsp_params.sp = False #turn off spacy processing
-kor_sample = lats.Normalize("피자 좀 주세요",whtsp_params)
-print(kor_sample.toks)
-```
-
-```
-['피자', '좀', '주세요']
-```
 
 ## License
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.

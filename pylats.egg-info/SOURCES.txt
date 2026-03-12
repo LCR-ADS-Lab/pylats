@@ -15,4 +15,5 @@ pylats/real_words5.pickle
 pylats.egg-info/PKG-INFO
 pylats.egg-info/SOURCES.txt
 pylats.egg-info/dependency_links.txt
+pylats.egg-info/requires.txt
 pylats.egg-info/top_level.txt

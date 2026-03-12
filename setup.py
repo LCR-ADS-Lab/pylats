@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pylats",
-    version="0.40",
+    version="0.63.1",
     author="Kristopher Kyle",
     author_email="kristopherkyle1@gmail.com",
     description="Text preprocessing for downstream linguistic analyses",
@@ -13,6 +13,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/LCR-ADS-Lab/pylats",
     packages=setuptools.find_packages(),
+    install_requires=[
+    "taaled"],
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
