@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".61" #Add mwu adjustments to normalize
+version = ".63" #allow up to 4gram mwus
 #need to test numbers.
 import math
 import os
@@ -138,7 +138,7 @@ class FrTrf:
 	nlp = None
 	sspl = "spacy"
 	punctse = [".","?","!"]
-	mwuDict = {"quelque+chose":{"w1Head":False,"uposNew":"PRON","xposNew":"PRON"}} #in the French Model, token.xpos and token.upos are both upos tags.
+	mwuDict = {"quelque+chose":{"idxHead":1,"uposNew":"PRON","xposNew":"PRON"}} #in the French Model, token.xpos and token.upos are both upos tags. For "idxHead", 0 means the first word is the head, 2 means the second word is the head, etc. 
 
 #other parameters:
 class EnDefault:
@@ -284,34 +284,28 @@ class TokObject():
 
 class preProcessConllu:
 	def mwuAdjust(self,tokSent,mwuDict): #{} #organized by mwu; only bgs for now #{"quelque+chose":{"w1Head":False,"uposNew":"PRON","xposNew":"PRON"}}
-		for idx, token in enumerate(tokSent):
-			if idx >= len(tokSent)-1: #skip last token of sentence (can't make forward bigram)
-				continue
-			target = "+".join([token.text.lower(),tokSent[idx+1].text.lower()])
-			if target in mwuDict:
-				#if tokSent[idx+1].text.lower() == mwuDict[target]["w2"]:
-				if mwuDict[target]["w1Head"] == True:
-					tokSent[idx+1].deprel = "mwu"
-					tokSent[idx+1].upos = "MWU"
-					tokSent[idx+1].xpos = "MWU"
-					tokSent[idx+1].idxHead = idx
-					tokSent[idx].upos = mwuDict[target]["uposNew"]
-					tokSent[idx].xpos = mwuDict[target]["xposNew"]
-					tokSent[idx].mwu = target
-					for token in tokSent:
-						if token.idxHead == idx+1:
-							token.idxHead = idx
-				else:
-					tokSent[idx].deprel = "mwu"
-					tokSent[idx].upos = "MWU"
-					tokSent[idx].xpos = "MWU"
-					tokSent[idx].idxHead = idx +1
-					tokSent[idx+1].upos = mwuDict[target]["uposNew"]
-					tokSent[idx+1].xpos = mwuDict[target]["xposNew"]
-					tokSent[idx+1].mwu = target
-					for token in tokSent:
-						if token.idxHead == idx:
-							token.idxHead = idx + 1
+		for n in [4,3,2]: #quadgrams, trigrams, bigrams
+			print(n)
+			for idx, token in enumerate(tokSent):
+				if token.mwu == None and token.deprel not in ["mwu"]:
+					if idx <= len(tokSent)-(n-1):
+						target = "+".join([x.text.lower() for x in tokSent[idx:idx+n]]) #ngram
+						print(target)
+						if target in mwuDict:
+							idxList = list(range(idx,idx+n)) #get sentence ids for list of items in ngram
+							for idxListidx, item in enumerate(idxList):
+								if idxListidx == mwuDict[target]["idxHead"]:
+									tokSent[item].upos = mwuDict[target]["uposNew"]
+									tokSent[item].xpos = mwuDict[target]["xposNew"]
+									tokSent[item].mwu = target
+								else:
+									tokSent[item].deprel = "mwu"
+									tokSent[item].upos = "MWU"
+									tokSent[item].xpos = "MWU"
+									tokSent[item].idxHead = idx
+									for token in tokSent:
+										if token.idxHead == item:
+											token.idxHead = idxList[mwuDict[target]["idxHead"]]
 		return(tokSent)
 			
 	def conllu2tokp(self,conlluText,params):
@@ -372,35 +366,30 @@ class preProcessConllu:
 
 class preProcess:
 	def mwuAdjust(self,tokSent,mwuDict): #{} #organized by mwu; only bgs for now #{"quelque+chose":{"w1Head":False,"uposNew":"PRON","xposNew":"PRON"}}
-		for idx, token in enumerate(tokSent):
-			if idx >= len(tokSent)-1: #skip last token of sentence (can't make forward bigram)
-				continue
-			target = "+".join([token.text.lower(),tokSent[idx+1].text.lower()])
-			if target in mwuDict:
-				#if tokSent[idx+1].text.lower() == mwuDict[target]["w2"]:
-				if mwuDict[target]["w1Head"] == True:
-					tokSent[idx+1].deprel = "mwu"
-					tokSent[idx+1].upos = "MWU"
-					tokSent[idx+1].xpos = "MWU"
-					tokSent[idx+1].idxHead = idx
-					tokSent[idx].upos = mwuDict[target]["uposNew"]
-					tokSent[idx].xpos = mwuDict[target]["xposNew"]
-					tokSent[idx].mwu = target
-					for token in tokSent:
-						if token.idxHead == idx+1:
-							token.idxHead = idx
-				else:
-					tokSent[idx].deprel = "mwu"
-					tokSent[idx].upos = "MWU"
-					tokSent[idx].xpos = "MWU"
-					tokSent[idx].idxHead = idx +1
-					tokSent[idx+1].upos = mwuDict[target]["uposNew"]
-					tokSent[idx+1].xpos = mwuDict[target]["xposNew"]
-					tokSent[idx+1].mwu = target
-					for token in tokSent:
-						if token.idxHead == idx:
-							token.idxHead = idx + 1
+		for n in [4,3,2]: #quadgrams, trigrams, bigrams
+			print(n)
+			for idx, token in enumerate(tokSent):
+				if token.mwu == None and token.deprel not in ["mwu"]:
+					if idx <= len(tokSent)-(n-1):
+						target = "+".join([x.text.lower() for x in tokSent[idx:idx+n]]) #ngram
+						print(target)
+						if target in mwuDict:
+							idxList = list(range(idx,idx+n)) #get sentence ids for list of items in ngram
+							for idxListidx, item in enumerate(idxList):
+								if idxListidx == mwuDict[target]["idxHead"]:
+									tokSent[item].upos = mwuDict[target]["uposNew"]
+									tokSent[item].xpos = mwuDict[target]["xposNew"]
+									tokSent[item].mwu = target
+								else:
+									tokSent[item].deprel = "mwu"
+									tokSent[item].upos = "MWU"
+									tokSent[item].xpos = "MWU"
+									tokSent[item].idxHead = idx
+									for token in tokSent:
+										if token.idxHead == item:
+											token.idxHead = idxList[mwuDict[target]["idxHead"]]
 		return(tokSent)
+
 	
 	def text2tok(self,text, params): #punctuation defaults to the params class definition.
 		#punctuation = params.punctuation,realwords = params.rwl, sp = params.sp
@@ -787,7 +776,7 @@ def corpus2Conllu(sourceFiles,targetLoc,params, suffList = [".txt"],verbose = Tr
 		fname = Path(fname)
 		fnameSimple = fname.name
 		#fnameSimple = fname.split("/")[-1]
-		newName = Path(targetLoc / fnameSimple + ".conllu")
+		newName = Path(targetLoc + fnameSimple + ".conllu")
 		#newName = targetLoc + fnameSimple + ".conllu"
 		if ignoreExt == True:
 			if newName in ignoreList:
@@ -797,7 +786,7 @@ def corpus2Conllu(sourceFiles,targetLoc,params, suffList = [".txt"],verbose = Tr
 			print(fnameSimple)
 		tFile = open(fname,errors = "ignore", encoding="utf-8").read()
 		#print(tFile[:100])
-		processedFile = preProcess(tFile, params, encoding="utf-8")
+		processedFile = preProcess(tFile, params)
 		outSents = []
 		for para in processedFile.parasto:
 			for sent in para:

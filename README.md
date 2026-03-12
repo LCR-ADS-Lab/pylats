@@ -30,6 +30,7 @@ lats.load_model(lats.EnSm) #English Small Model ("en_core_web_sm")
 # 	nlp = None # after "load_model" is run, this will be the spacy model higlighted above
 # 	sspl = "spacy" # use spacy to split sentences
 # 	punctse = [".","?","!"] # what is used to split sentences if spacy is not used
+#	mwuDict = None #Currently used in French; {"quelque+chose":{"idxHead":1,"uposNew":"PRON","xposNew":"PRON"}} #in the French Model, token.xpos and token.upos are both upos tags. For "idxHead", 0 means the first word is the syntactic head according to spacy, 2 means the second word is the head, etc. 
 ```
 
 Second, create a version of your text that has been processed by spacy using an appropriate language class (in this case lats.EnSm):
@@ -122,7 +123,9 @@ class EnDefault:
 	lemma = True
 	lower = True #treat all words as lower case
 	pos = "upos" #other options are "pos" for Penn tags and "upos" for universal tags
-	morphs = None #can also be None
+	morphs = None #Currently used in Spanish and French
+	morphsExtra = None #for more complicated situations; Currently used in French
+
 ``` 
 
 ## Other languages
