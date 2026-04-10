@@ -6,7 +6,7 @@ Created on Tue Dec 21 10:35:53 2021
 @author: kristopherkyle
 
 """
-version = ".63.1" #allow up to 4gram mwus; update for pypi
+version = ".64" #refine dependency output
 #need to test numbers.
 import math
 import os
@@ -163,7 +163,8 @@ class EnDefault:
 	advMannerLex = ["well"]
 	includeCwFw = True
 	contentLemIgnore = [] #can be added, blank for now
-	deprels = ["nsubj","dobj","amod","advmod"]
+	#deprels = ["nsubj","dobj","amod","advmod"]
+	deprels = {"nsubj":{"headPOS":["VERB"],"depPOS":["NOUN"]},"obj":{"headPOS":["VERB"],"depPOS":["NOUN"]},"amod":{"headPOS":["NOUN"],"depPOS":["ADJ"]},"advmod":{"headPOS":["VERB"],"depPOS":["ADV"],"depcwfw":["cw"]}}
 	depOrder = "dep2head" #options are "dep2head" or "orderofA"
 	lemma = True
 	lower = True #treat all words as lower case
@@ -193,7 +194,8 @@ class EsDefault: #these are for the Spanish parameters - these need to be update
 	advMannerLex = ["bien", "mal", "despacio", "mejor", "peor", "rápido", "lento", "fuerte", "alto", "bajo", "suave"]
 	includeCwFw = True
 	contentLemIgnore = ["ser","estar"] #note that these are actually already ignored because they are tagged as "AUX"
-	deprels = ["nsubj","obj","amod","advmod"] #add compound? (noun-noun combinations)
+	#deprels = ["nsubj","obj","amod","advmod"] #add compound? (noun-noun combinations)
+	deprels = {"nsubj":{"headPOS":["VERB"],"depPOS":["NOUN"]},"obj":{"headPOS":["VERB"],"depPOS":["NOUN","PROPN"]},"amod":{"headPOS":["NOUN"],"depPOS":["ADJ"]},"advmod":{"headPOS":["VERB"],"depPOS":["ADV"]}}
 	depOrder = "dep2head" #options are "dep2head" or "orderofA"
 	lemma = True #lemmatize word form?
 	lower = True #treat all words as lower case?
@@ -504,11 +506,11 @@ class preProcess:
 			self.sentsto = self.para2sent(self.parasto) #TokObject tokens ([[]]) [sent[tok]]
 			self.toksto = self.sent2tok(self.sentsto) #TokObject tokens ([]) [tok]
 
-	advMannerSuff = ["ment"]
-	advMannerLex = ["bien","mieux","mal","pire","vite","fort"]
-	contentPOS = ["VERB","NOUN","PROPN","ADJ","ADV"] #note that PROPN will be overridden by posignore in this case
-	advMannerSuff = ["mente"]
-	advMannerLex = ["bien", "mal", "despacio", "mejor", "peor", "rápido", "lento", "fuerte", "alto", "bajo", "suave"]
+	# advMannerSuff = ["ment"]
+	# advMannerLex = ["bien","mieux","mal","pire","vite","fort"]
+	# contentPOS = ["VERB","NOUN","PROPN","ADJ","ADV"] #note that PROPN will be overridden by posignore in this case
+	# advMannerSuff = ["mente"]
+	# advMannerLex = ["bien", "mal", "despacio", "mejor", "peor", "rápido", "lento", "fuerte", "alto", "bajo", "suave"]
 
 class Normalize:
 	def advMannerCheck(self,token,params):
@@ -685,16 +687,40 @@ class Normalize:
 				#cleanSent = [x for x in sent if x.upos not in ["PUNCT"]]
 				for token in sent:
 					if token.deprel in params.deprels:
-						if params.depOrder == "dep2head":
-							preDep = [token.deprel,token.tokOut,sent[token.idxHead].tokOut]
-						else:
-							if token.idx < idxDict[token.idxCharHead]:
+						if isinstance(params.deprels,list) == True:
+							if params.depOrder == "dep2head":
 								preDep = [token.deprel,token.tokOut,sent[token.idxHead].tokOut]
 							else:
-								preDep = [token.deprel,sent[token.idxHead].tokOut,token.tokOut]
-						if None in preDep:
-							ignored.append(preDep)
-							continue
+								if token.idx < idxDict[token.idxCharHead]:
+									preDep = [token.deprel,token.tokOut,sent[token.idxHead].tokOut]
+								else:
+									preDep = [token.deprel,sent[token.idxHead].tokOut,token.tokOut]
+							if None in preDep:
+								ignored.append(preDep)
+								continue
+						else:
+							depCritMet = True
+							depCrit = params.deprels[token.deprel]
+							headToken = sent[token.idxHead]
+							if "headPOS" in depCrit and headToken.upos not in depCrit["headPOS"]:
+								depCritMet = False
+							if "depPOS" in depCrit and token.upos not in depCrit["depPOS"]:
+								depCritMet = False
+							if "depcwfw" in depCrit and token.cwfw not in depCrit["depcwfw"]:
+								depCritMet = False
+							if depCritMet == False:
+								continue
+							else:
+								if params.depOrder == "dep2head":
+									preDep = [token.deprel,token.tokOut,sent[token.idxHead].tokOut]
+								else:
+									if token.idx < idxDict[token.idxCharHead]:
+										preDep = [token.deprel,token.tokOut,sent[token.idxHead].tokOut]
+									else:
+										preDep = [token.deprel,sent[token.idxHead].tokOut,token.tokOut]
+								if None in preDep:
+									ignored.append(preDep)
+									continue
 						token.depbgOut = params.ngramConnect.join(preDep)
 						depGrams.append(params.ngramConnect.join(preDep))
 				sents.append(depGrams)
